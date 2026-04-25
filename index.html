@@ -70,10 +70,17 @@
             display: flex; align-items: center; gap: 8px; border: 1px solid #444; margin-bottom: 5px;
         }
 
-        .btn-del { color: var(--ua-red); cursor: pointer; border: none; background: none; font-size: 16px; padding: 0; margin-left: 5px;}
-        .stat-line { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 15px 0; }
+        /* Estilos para la nueva sección de redes */
+        .info-social {
+            background: rgba(0, 0, 0, 0.3); border: 1px solid var(--ua-gold); border-radius: 8px; padding: 15px; margin-top: 15px; text-align: center;
+        }
+        .info-social p { font-size: 13px; margin-bottom: 10px; color: #fff; }
+        .info-social a { display: block; color: var(--ua-gold); text-decoration: none; font-size: 12px; margin: 5px 0; font-weight: bold; }
+        .info-social a:hover { text-decoration: underline; color: white; }
+
         .tourney-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #000; color: var(--ua-gold); margin-left: 5px; border: 1px solid var(--ua-gold); }
         .btn-backup { background: var(--success); color: #000; margin-bottom: 15px; font-size: 12px; }
+        .stat-line { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 15px 0; }
     </style>
 </head>
 <body>
@@ -97,9 +104,16 @@
         </div>
 
         <div id="discord-msg" class="hidden">
-            <h3 style="color:var(--ua-gold)">¡REGISTRO EXITOSO! ✅</h3>
+            <h3 style="color:var(--ua-gold); text-align:center;">¡REGISTRO EXITOSO! ✅</h3>
             <p id="tourney-id-display" style="background:#0b111a; padding:15px; border-radius:5px; color:var(--ua-gold); font-size: 18px; font-weight: bold; border:1px solid var(--ua-gold); text-align:center;"></p>
-            <button onclick="resetView()" style="background:#485460;">Registrar a otro</button>
+            
+            <div class="info-social">
+                <p>Para mayor información sobre los torneos entra aquí:</p>
+                <a href="https://discord.gg/EGWVvZ4k" target="_blank">🌐 DISCORD OFICIAL</a>
+                <a href="https://www.instagram.com/proxjef_?igsh=MW82c2Z6N3c2czk0eA==" target="_blank">📸 INSTAGRAM: @proxjef_</a>
+            </div>
+
+            <button onclick="resetView()" style="background:#485460; margin-top: 15px;">Registrar a otro</button>
         </div>
         
         <hr style="margin:40px 0; opacity:0.1">
