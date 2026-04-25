@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plus Ultra! - Sistema de Torneo ELprotaSSS</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <style>
+        :root { 
+            --ua-blue: #2c3e50; 
+            --ua-gold: #f1c40f; 
+            --ua-red: #e74c3c;
+            --bg: #0b0e14; 
+            --card: #1c2636; 
+            --text: #ffffff; 
+            --success: #2ecc71; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); color: var(--text); margin: 0;
+            display: flex; justify-content: center; min-height: 100vh;
+            background-image: linear-gradient(rgba(11, 14, 20, 0.95), rgba(11, 14, 20, 0.95)), 
+                              url('https://images.alphacoders.com/712/712396.png'); 
+            background-size: cover; background-attachment: fixed; padding: 20px;
+        }
+
+        .container { 
+            background: var(--card); padding: 2rem; border-radius: 15px; width: 100%; max-width: 480px; 
+            box-shadow: 0 0 25px rgba(241, 196, 15, 0.25); border: 2px solid var(--ua-blue);
+            position: relative; overflow: hidden; margin: auto;
+        }
+
+        .container::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 8px;
+            background: linear-gradient(90deg, var(--ua-red), var(--ua-gold), var(--ua-blue));
+            z-index: 10;
+        }
+
+        h2 { text-align: center; color: var(--ua-gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; margin-top: 10px;}
+        .subtitle { text-align: center; font-size: 10px; color: #94a3b8; margin-bottom: 20px; text-transform: uppercase; }
+
+        .input-group { position: relative; width: 100%; }
+        input, select { 
+            width: 100%; padding: 14px; margin: 10px 0; border-radius: 5px; 
+            border: 1px solid #334155; background: #0b111a; color: white; box-sizing: border-box; 
+            transition: 0.3s;
+        }
+        
+        .toggle-pass {
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; background: none; border: none; color: var(--ua-gold); font-size: 18px; width: auto; padding: 0;
+        }
+
+        button { 
+            width: 100%; padding: 14px; background: var(--ua-blue); color: white; 
+            border: none; border-radius: 5px; font-weight: bold; cursor: pointer; 
+            margin-top: 12px; transition: 0.3s; text-transform: uppercase;
+        }
+        button:hover { background: #34495e; transform: translateY(-2px); }
+
+        .btn-secondary { background: transparent; border: 1px solid var(--ua-gold); color: var(--ua-gold); font-size: 11px; padding: 8px; }
+        .hidden { display: none; }
+        .admin-box { background: rgba(255, 255, 255, 0.03); border: 1px dashed var(--ua-gold); padding: 15px; border-radius: 10px; margin-top: 20px; }
+
+        .player-item { 
+            background: #2d3436; color: var(--success); padding: 5px 12px; 
+            border-radius: 20px; font-size: 11px; font-weight: bold; 
+            display: flex; align-items: center; gap: 8px; border: 1px solid #444; margin-bottom: 5px;
+        }
+
+        .btn-del { color: var(--ua-red); cursor: pointer; border: none; background: none; font-size: 16px; padding: 0; margin-left: 5px;}
+        .stat-line { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 15px 0; }
+        .tourney-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #000; color: var(--ua-gold); margin-left: 5px; border: 1px solid var(--ua-gold); }
+        .btn-backup { background: var(--success); color: #000; margin-bottom: 15px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="view-login">
+        <h2>PLUS ULTRA</h2>
+        <p class="subtitle">Academia de Torneos ELprotaSSS</p>
+        
+        <div id="registration-area">
+            <input type="text" id="pName" placeholder="Nombre del Jugador">
+            <div style="position: relative;">
+                <input type="text" id="pCode" placeholder="Código de Invitación">
+                <button onclick="generatePublicCode()" class="btn-secondary" id="btnGenCode">¿No tienes código? Generar uno</button>
+            </div>
+            <select id="pTourney">
+                <option value="TOR36">🎮 BÁSICO (Insc. 3 Soles - Premio 36)</option>
+                <option value="TOR60">🎮 MEDIO (Insc. 5 Soles - Premio 60)</option>
+            </select>
+            <button onclick="registerPlayer()" style="background:var(--success)">¡REGISTRARME!</button>
+        </div>
+
+        <div id="discord-msg" class="hidden">
+            <h3 style="color:var(--ua-gold)">¡REGISTRO EXITOSO! ✅</h3>
+            <p id="tourney-id-display" style="background:#0b111a; padding:15px; border-radius:5px; color:var(--ua-gold); font-size: 18px; font-weight: bold; border:1px solid var(--ua-gold); text-align:center;"></p>
+            <button onclick="resetView()" style="background:#485460;">Registrar a otro</button>
+        </div>
+        
+        <hr style="margin:40px 0; opacity:0.1">
+        <p style="text-align:center; font-size:11px; color:#636e72;">ACCESO STAFF</p>
+        <input type="text" id="userLog" placeholder="Usuario">
+        <div class="input-group">
+            <input type="password" id="passLog" placeholder="Contraseña">
+            <button class="toggle-pass" onclick="togglePassword('passLog')">👁️</button>
+        </div>
+        <button onclick="handleLogin()">Entrar al Panel</button>
+    </div>
+
+    <div id="view-master" class="hidden">
+        <h2 style="color:var(--ua-red)">👑 PANEL MAESTRO</h2>
+        
+        <div class="admin-box" style="border-style: solid; background: rgba(46, 204, 113, 0.1);">
+            <h4 style="margin:0; color:var(--success); font-size: 12px;">📂 REGISTRO SEMANAL</h4>
+            <p style="font-size: 10px; color: #94a3b8; margin: 5px 0 10px 0;">Descarga la lista de aspirantes para tu reporte semanal.</p>
+            <button class="btn-backup" onclick="downloadWeeklyBackup()">📥 DESCARGAR COPIA DE SEGURIDAD</button>
+        </div>
+
+        <div class="admin-box">
+            <input type="text" id="newAdminUser" placeholder="Nombre Staff">
+            <input type="text" id="newAdminPass" placeholder="Contraseña Staff">
+            <button onclick="addAdmin()" style="background:var(--ua-gold); color:black">CREAR STAFF</button>
+        </div>
+        
+        <input type="text" id="masterSearch" placeholder="🔍 Buscar aspirante..." onkeyup="loadMasterData()" style="margin-top:20px;">
+        <div id="master-stats"></div>
+        
+        <button onclick="clearAllPlayers()" style="background:var(--ua-red); margin-top:20px;">REINICIAR TORNEO</button>
+        <button onclick="location.reload()" style="background:none; border:1px solid #444;">Cerrar Sesión</button>
+    </div>
+
+    <div id="view-colab" class="hidden">
+        <h2 id="welcome-colab">PANEL HERO</h2>
+        <div class="admin-box" style="text-align:center;">
+            <p>Tu Código:</p>
+            <h3 id="display-my-code" style="color:var(--ua-gold); font-size:28px; margin:10px 0;">---</h3>
+            <p>Reclutas: <b id="my-count" style="color:var(--success)">0</b></p>
+            <div id="colab-player-list" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
+        </div>
+        <button onclick="location.reload()" style="background:none; border:1px solid #444; margin-top:20px">Cerrar Sesión</button>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSnFs5bQEVKbCP2kEUNqDmWOMu9zr9ULs",
+      authDomain: "my-hero-ur.firebaseapp.com",
+      databaseURL: "https://my-hero-ur-default-rtdb.firebaseio.com",
+      projectId: "my-hero-ur",
+      storageBucket: "my-hero-ur.firebasestorage.app",
+      messagingSenderId: "960407018320",
+      appId: "1:960407018320:web:676f3566a8f6e9f61f6a55",
+      measurementId: "G-H7XEEVTGD5"
+    };
+
+    const USUARIO_MAESTRO = "ADMINSSS"; 
+    const CLAVE_MAESTRA = "ELprotaSSS@@@"; 
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function togglePassword(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === "password" ? "text" : "password";
+    }
+
+    function generatePublicCode() {
+        const code = "HERO-" + Math.floor(1000 + Math.random() * 9000);
+        db.ref('activeCodes/' + code).set(USUARIO_MAESTRO).then(() => {
+            document.getElementById('pCode').value = code;
+            alert("Código generado: " + code);
+        });
+    }
+
+    function handleLogin() {
+        const u = document.getElementById('userLog').value.trim().toUpperCase();
+        const p = document.getElementById('passLog').value.trim();
+
+        if(u === USUARIO_MAESTRO && p === CLAVE_MAESTRA) {
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('view-master').classList.remove('hidden');
+            loadMasterData();
+        } else {
+            db.ref('admins/' + u).once('value', s => {
+                if(s.exists() && s.val().pass === p) {
+                    document.getElementById('view-login').classList.add('hidden');
+                    document.getElementById('view-colab').classList.remove('hidden');
+                    document.getElementById('welcome-colab').innerText = "HÉROE: " + u;
+                    document.getElementById('display-my-code').innerText = s.val().invCode;
+                    db.ref('admins/'+u+'/count').on('value', snap => { document.getElementById('my-count').innerText = snap.val() || 0; });
+                } else { alert("Error de acceso"); }
+            });
+        }
+    }
+
+    function registerPlayer() {
+        const name = document.getElementById('pName').value.trim();
+        const code = document.getElementById('pCode').value.trim().toUpperCase();
+        const type = document.getElementById('pTourney').value;
+        if(!name || !code) return alert("Completa los datos");
+
+        db.ref('activeCodes/' + code).once('value', s => {
+            if(s.exists()) {
+                const adminOwner = s.val();
+                db.ref('players').once('value', snap => {
+                    const count = snap.numChildren() + 1;
+                    const orderNum = String(count).padStart(3, '0');
+                    const finalId = `${type}:${orderNum}`;
+                    
+                    db.ref('players').push({ 
+                        name, codeUsed: code, adminInvited: adminOwner, 
+                        tourneyId: finalId, regTime: new Date().toLocaleTimeString()
+                    });
+
+                    if(adminOwner !== USUARIO_MAESTRO) {
+                        db.ref('admins/' + adminOwner + '/count').transaction(c => (c || 0) + 1);
+                    }
+
+                    document.getElementById('tourney-id-display').innerText = finalId;
+                    document.getElementById('registration-area').classList.add('hidden');
+                    document.getElementById('discord-msg').classList.remove('hidden');
+                });
+            } else { alert("Código no válido"); }
+        });
+    }
+
+    function downloadWeeklyBackup() {
+        db.ref('players').once('value', snap => {
+            if(!snap.exists()) return alert("No hay datos de jugadores.");
+            let csvContent = "data:text/csv;charset=utf-8,ID Torneo,Nombre,Staff Reclutador,Codigo Usado,Hora\n";
+            snap.forEach(child => {
+                const p = child.val();
+                csvContent += `"${p.tourneyId}","${p.name}","${p.adminInvited}","${p.codeUsed}","${p.regTime}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            const fecha = new Date().toLocaleDateString().replace(/\//g, '-');
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Reporte_Semanal_PlusUltra_${fecha}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+
+    function addAdmin() {
+        const u = document.getElementById('newAdminUser').value.trim().toUpperCase();
+        const p = document.getElementById('newAdminPass').value.trim();
+        const code = Math.random().toString(36).substring(2, 7).toUpperCase();
+        if(u && p) {
+            db.ref('admins/' + u).set({ pass: p, count: 0, invCode: code });
+            db.ref('activeCodes/' + code).set(u);
+            alert(`Staff ${u} creado. Código: ${code}`);
+            document.getElementById('newAdminUser').value = "";
+            document.getElementById('newAdminPass').value = "";
+        }
+    }
+
+    function loadMasterData() {
+        const search = document.getElementById('masterSearch').value.toLowerCase();
+        db.ref('admins').on('value', adminSnap => {
+            db.ref('players').on('value', playerSnap => {
+                const div = document.getElementById('master-stats');
+                div.innerHTML = "";
+                
+                let masterPlayers = "";
+                playerSnap.forEach(p => {
+                    const d = p.val();
+                    if(d.adminInvited === USUARIO_MAESTRO && d.name.toLowerCase().includes(search)) {
+                        masterPlayers += `<span class="player-item" style="border-color:var(--ua-gold)">${d.name} <span class="tourney-tag">${d.tourneyId}</span></span>`;
+                    }
+                });
+                div.innerHTML += `<div class="stat-line"><b style="color:var(--ua-red)">👑 MAESTRO (DIRECTO)</b><br>${masterPlayers}</div>`;
+
+                adminSnap.forEach(admin => {
+                    const info = admin.val();
+                    let players = "";
+                    playerSnap.forEach(p => {
+                        const d = p.val();
+                        if(d.codeUsed === info.invCode && d.name.toLowerCase().includes(search)) {
+                            players += `<span class="player-item">${d.name} <span class="tourney-tag">${d.tourneyId}</span></span>`;
+                        }
+                    });
+                    div.innerHTML += `<div class="stat-line"><b>${admin.key}</b> <small style="color:var(--ua-gold)">[Cód: ${info.invCode}]</small><br>${players}</div>`;
+                });
+            });
+        });
+    }
+
+    function resetView() {
+        document.getElementById('registration-area').classList.remove('hidden');
+        document.getElementById('discord-msg').classList.add('hidden');
+        document.getElementById('pName').value = "";
+    }
+
+    function clearAllPlayers() {
+        if(confirm("¿Borrar todos los registros?")) {
+            db.ref('players').remove();
+            db.ref('admins').once('value', s => s.forEach(a => db.ref('admins/'+a.key+'/count').set(0)));
+        }
+    }
+</script>
+</body>
+</html>
